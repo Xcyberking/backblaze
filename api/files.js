@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
     const {
       startFileName = '',
       prefix = '',
-      maxCount = 200,
+      maxCount = 1000,
       delimiter = '/',
     } = req.query;
 
@@ -30,6 +30,7 @@ module.exports = async (req, res) => {
       { headers: { Authorization: auth.token } }
     );
 
+    // Filter and map files to ensure accurate data
     const files = r.data.files.map((f) => ({
       id: f.fileId,
       name: f.fileName,
