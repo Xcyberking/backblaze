@@ -19,7 +19,6 @@
   input:focus { border-color: #38bdf8; }
   button { background: #38bdf8; color: #0f172a; cursor: pointer; border: none; font-weight: 600; transition: .2s; }
   button:hover { background: #0ea5e9; }
-  button:disabled { opacity: .5; cursor: not-allowed; }
   .login-box button { width: 100%; }
 
   /* Topbar */
@@ -30,7 +29,7 @@
   .storage-card { background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #334155; }
   .storage-header { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #cbd5e1; }
   .progress-bg { width: 100%; height: 12px; background: #0f172a; border-radius: 6px; overflow: hidden; }
-  .progress-fill { height: 100%; background: linear-gradient(90deg, #22c55e, #eab308, #ef4444); background-size: 300% 100%; transition: width 0.5s ease; }
+  .progress-fill { height: 100%; background: #22c55e; transition: width 0.5s ease; }
 
   /* Toolbar */
   .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
@@ -69,7 +68,6 @@
 </head>
 <body>
 
-<!-- LOGIN SECTION -->
 <div id="login" class="login-box">
   <h1 style="font-size:20px;margin-bottom:16px;text-align:center;">🔐 Login</h1>
   <input id="pw" type="password" placeholder="Admin password" />
@@ -77,15 +75,12 @@
   <div id="loginErr" class="error"></div>
 </div>
 
-<!-- MAIN APP SECTION -->
 <div id="app" class="container hidden">
-  
   <div class="topbar">
     <h1>📦 B2 File Manager</h1>
     <button onclick="logout()" style="background:#64748b; padding:8px 16px;">Logout</button>
   </div>
 
-  <!-- Storage Dashboard -->
   <div class="storage-card">
     <div class="storage-header">
       <span>Bucket Storage</span>
@@ -96,16 +91,12 @@
     </div>
   </div>
 
-  <!-- Toolbar -->
   <div class="toolbar">
     <input id="search" type="text" placeholder="Search files in this folder..." />
     <button onclick="loadFiles(currentPrefix)">🔄 Refresh</button>
   </div>
   
-  <!-- Navigation Breadcrumbs -->
   <div id="breadcrumb" class="breadcrumb"></div>
-
-  <!-- Files List -->
   <div id="content"></div>
 </div>
 
@@ -115,7 +106,6 @@ let currentPrefix = '';
 
 function $(id) { return document.getElementById(id); }
 
-// ---- Login ----
 async function login() {
   const pw = $('pw').value;
   $('loginErr').textContent = '';
@@ -146,12 +136,11 @@ function logout() {
 function showApp() {
   $('login').classList.add('hidden');
   $('app').classList.remove('hidden');
-  loadFiles(''); // Load root folder
+  loadFiles(''); 
 }
 
-// ---- Format Helpers ----
 function fmtSize(bytes) {
-  if (bytes === 0) return '0 B';
+  if (!bytes || bytes === 0) return '0 B';
   const k = 1024, s = ['B','KB','MB','GB','TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${(bytes / Math.pow(k, i)).toFixed(2)} ${s[i]}`;
@@ -159,16 +148,12 @@ function fmtSize(bytes) {
 
 function fmtDate(ts) {
   if (!ts) return '-';
-  return new Date(ts).toLocaleString('en-IN', { 
-    day: '2-digit', month: 'short', year: 'numeric', 
-    hour: '2-digit', minute: '2-digit' 
-  });
+  return new Date(ts).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-// ---- Fetch Files & Folders ----
 async function loadFiles(prefix = '') {
   currentPrefix = prefix;
-  $('content').innerHTML = '<div class="loading">⏳ Loading data from Backblaze...</div>';
+  $('content').innerHTML = '<div class="loading">⏳ Loading data...</div>';
   renderBreadcrumb(prefix);
 
   try {
@@ -186,7 +171,6 @@ async function loadFiles(prefix = '') {
   }
 }
 
-// ---- Render Storage Bar ----
 function updateStorage(storage) {
   if(!storage) return;
   const usedBytes = storage.total;
@@ -195,17 +179,11 @@ function updateStorage(storage) {
   
   $('storage-text').textContent = `${fmtSize(usedBytes)} used of ${fmtSize(limitBytes)}`;
   $('storage-bar').style.width = `${percent.toFixed(1)}%`;
-  
-  // Color logic
-  if(percent < 70) $('storage-bar').style.background = '#22c55e'; // Green
-  else if(percent < 90) $('storage-bar').style.background = '#eab308'; // Yellow
-  else $('storage-bar').style.background = '#ef4444'; // Red
 }
 
-// ---- Render Breadcrumbs ----
 function renderBreadcrumb(prefix) {
   if (!prefix) {
-    $('breadcrumb').innerHTML = `📍 <span onclick="loadFiles('')" style="color:#38bdf8; cursor:pointer;">Root</span>`;
+    $('breadcrumb').innerHTML = `📍 <span onclick="loadFiles('')">Root</span>`;
     return;
   }
   
@@ -215,7 +193,6 @@ function renderBreadcrumb(prefix) {
   
   parts.forEach((part, index) => {
     currentPath += part + '/';
-    // Only make it clickable if it's not the current folder
     if (index === parts.length - 1) {
       html += `<span class="slash">/</span> <span style="color:#e2e8f0; cursor:default;">${part}</span>`;
     } else {
@@ -226,23 +203,19 @@ function renderBreadcrumb(prefix) {
   $('breadcrumb').innerHTML = html;
 }
 
-// ---- Render Files Table ----
 function renderFiles(files, folders, prefix) {
   let html = '';
-
-  // Search filter (client-side within current folder)
   const searchStr = $('search').value.toLowerCase();
-  const filteredFiles = files.filter(f => f.name.toLowerCase().includes(searchStr));
+
+  const filteredFiles = files.filter(f => f.displayName.toLowerCase().includes(searchStr));
   const filteredFolders = folders.filter(f => f.toLowerCase().includes(searchStr));
 
   html += '<table><thead><tr><th>Name</th><th>Size</th><th>Type</th><th>Uploaded</th><th style="text-align:right;">Actions</th></tr></thead><tbody>';
 
   // Render Folders
   filteredFolders.forEach((f) => {
-    // f is already the full path (e.g., "scripts/")
-    const folderName = f.replace(prefix, ''); 
     html += `<tr>
-      <td class="name"><span class="folder" onclick="loadFiles('${f}')">📁 ${folderName}</span></td>
+      <td class="name"><span class="folder" onclick="loadFiles('${prefix}${f}')">📁 ${f}</span></td>
       <td>—</td><td>Folder</td><td>—</td><td>—</td>
     </tr>`;
   });
@@ -253,17 +226,16 @@ function renderFiles(files, folders, prefix) {
 
   // Render Files
   filteredFiles.forEach((f) => {
-    const fileName = f.name.replace(prefix, ''); // Show only file name, not full path
-    const fileType = (f.type || '').split('/')[1] || f.type || 'file';
+    const fileType = (f.type || '').split('/')[1] || f.type || 'FILE';
     
     html += `<tr>
-      <td class="name"><span class="file">📄 ${fileName}</span></td>
+      <td class="name"><span class="file">📄 ${f.displayName}</span></td>
       <td class="size">${fmtSize(f.size)}</td>
       <td style="text-transform:uppercase; font-size:12px;">${fileType}</td>
       <td style="font-size:13px; color:#94a3b8;">${fmtDate(f.uploaded)}</td>
       <td><div class="actions">
-        <button class="btn-sm btn-dl" onclick='downloadFile(${JSON.stringify(f.name)})' title="Download">⬇</button>
-        <button class="btn-sm btn-del" onclick='deleteFile(${JSON.stringify(f.id)}, ${JSON.stringify(f.name)})' title="Delete">🗑</button>
+        <button class="btn-sm btn-dl" onclick='downloadFile(${JSON.stringify(f.name)})'>⬇</button>
+        <button class="btn-sm btn-del" onclick='deleteFile(${JSON.stringify(f.id)}, ${JSON.stringify(f.name)})'>🗑</button>
       </div></td>
     </tr>`;
   });
@@ -272,7 +244,6 @@ function renderFiles(files, folders, prefix) {
   $('content').innerHTML = html;
 }
 
-// ---- Download File ----
 async function downloadFile(fileName) {
   try {
     const r = await fetch(`/api/download?fileName=${encodeURIComponent(fileName)}`, {
@@ -280,17 +251,14 @@ async function downloadFile(fileName) {
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error);
-    
-    // Open download URL in new tab
     window.open(d.url, '_blank');
   } catch (e) {
     alert('Download error: ' + e.message);
   }
 }
 
-// ---- Delete File ----
 async function deleteFile(fileId, fileName) {
-  if (!confirm(`Are you sure you want to permanently delete:\n\n${fileName} ?\n\nThis action cannot be undone.`)) return;
+  if (!confirm(`Delete "${fileName}" permanently?`)) return;
 
   try {
     const r = await fetch('/api/delete', {
@@ -303,30 +271,20 @@ async function deleteFile(fileId, fileName) {
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error);
-    
-    // Reload the current folder after delete
     loadFiles(currentPrefix); 
   } catch (e) {
     alert('Delete error: ' + e.message);
   }
 }
 
-// ---- Event Listeners ----
-$('search').addEventListener('input', () => {
-  // Real-time filtering trigger by re-rendering (if files are already loaded)
-  // For simplicity, we just reload from local memory if we had a global var, 
-  // but since it's not saved, pressing enter is better.
-});
-
 $('search').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') loadFiles(currentPrefix); // Search reloads current folder
+  if (e.key === 'Enter') loadFiles(currentPrefix);
 });
 
 $('pw').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') login();
 });
 
-// ---- Init ----
 if (token) showApp();
 </script>
 </body>
