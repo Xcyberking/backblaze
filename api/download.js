@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
       {
         bucketId,
         fileNamePrefix: fileName,
-        validDurationInSeconds: 3600,
+        validDurationInSeconds: 3600, // 1 hour valid
       },
       { headers: { Authorization: auth.token } }
     );
