@@ -7,10 +7,9 @@ module.exports = async (req, res) => {
 
     const auth = await authorize();
     const bucketId = await getBucketId();
+    const { prefix = '' } = req.query;
 
-    const { prefix = '', delimiter = '/' } = req.query;
-
-    // 1. Get Total Bucket Storage Info
+    // 1. Get Bucket Storage Info
     const bucketInfoReq = await axios.post(
       `${auth.apiUrl}/b2api/v3/b2_list_buckets`,
       { accountId: auth.accountId, bucketId: bucketId },
@@ -18,40 +17,59 @@ module.exports = async (req, res) => {
     );
     const bucketInfo = bucketInfoReq.data.buckets[0];
 
-    // 2. List Files inside the current folder (prefix)
+    // 2. List Files (WITHOUT delimiter to get raw files properly)
     const r = await axios.post(
       `${auth.apiUrl}/b2api/v3/b2_list_file_names`,
       {
         bucketId,
         prefix,
-        delimiter,
         maxFileCount: 1000,
       },
       { headers: { Authorization: auth.token } }
     );
 
-    // Filter out the dummy zero-byte file that represents the folder itself
-    const files = r.data.files
-      .filter((f) => f.fileName !== prefix) 
-      .map((f) => ({
-        id: f.fileId,
-        name: f.fileName,
-        size: f.contentLength,
-        type: f.contentType,
-        uploaded: f.uploadTimestamp,
-      }));
+    const files = [];
+    const foldersSet = new Set();
 
-    // Folders are provided directly by Backblaze API now
-    const folders = r.data.folders || [];
+    // 3. Smart Filter: Backblaze folders ko 0B file k form m bhejta h, use yahan alag karenge
+    r.data.files.forEach((f) => {
+      const fileName = f.fileName;
+      
+      // Agar prefix hai (e.g., "scripts/"), toh usko hata do taaki sirf aage ka naam dikhe
+      const relativeName = fileName.substring(prefix.length);
+
+      // Agar relative name m '/' hai, iska matlab ye andar ka folder ya file hai
+      const slashIndex = relativeName.indexOf('/');
+
+      if (slashIndex !== -1) {
+        // Ye ek folder hai (e.g., agar name "scripts/logs/" hai)
+        const folderName = relativeName.substring(0, slashIndex + 1);
+        foldersSet.add(folderName);
+      } else {
+        // Ye ek asli file hai (size 0 se badi, ya bina slash wali)
+        if (relativeName !== '') {
+          files.push({
+            id: f.fileId,
+            name: fileName, // Full path for download/delete
+            displayName: relativeName, // Sirf file ka naam
+            size: f.contentLength,
+            type: f.contentType,
+            uploaded: f.uploadTimestamp,
+          });
+        }
+      }
+    });
+
+    // Folders ko array me convert karein
+    const folders = Array.from(foldersSet);
 
     res.json({
       files,
       folders,
       storage: {
-        total: bucketInfo.bucketInfo?.storageBytes 
-            || bucketInfo.storageBytes 
-            || 0, // Total used by this bucket
-        limit: 10 * 1024 * 1024 * 1024 // 10GB default B2 free limit (you can change this)
+        // Backblaze API me direct total storage nahi milta easily, isliye approx 10GB limit dikha rahe hain
+        total: bucketInfo.bucketInfo?.storageBytes || bucketInfo.storageBytes || 0,
+        limit: 10 * 1024 * 1024 * 1024 // 10GB
       }
     });
 
