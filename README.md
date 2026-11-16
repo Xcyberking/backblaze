@@ -19,7 +19,6 @@ A mobile-friendly Backblaze B2 S3-compatible storage dashboard deployed as Verce
 - Restricted application-key list/create/revoke (requires separate master key credentials).
 - Private/public bucket access control (requires master key credentials).
 - Manual bucket-to-bucket backup, date-stamped daily Vercel Cron snapshots and restore.
-- Private/public bucket access and bucket versioning controls.
 
 ## Deploy
 1. Import this repository into Vercel.
@@ -42,10 +41,10 @@ Create a Backblaze application key with only the required bucket and read/write/
 ## Notes
 - Upload URLs expire after 15 minutes; download URLs after 10 minutes.
 - Files up to 100 MiB use a single presigned PUT; larger files use 64 MiB multipart chunks. Configure bucket CORS with the dashboard button first. Multipart ETag exposure is required.
-- Bucket deletion succeeds only when the bucket is empty.
+- Bucket deletion succeeds only when the bucket is empty. Object Lock must be enabled when the bucket is created; enabling it later on an existing bucket may be rejected.
 - Lifecycle rule support depends on the S3-compatible API and key capabilities available for your B2 account. Verify rules in the Backblaze console after saving.
 - Daily cron runs at 03:00 UTC. Vercel plan limits apply; long-running backups may time out. For large buckets, use a dedicated worker or split backup jobs. The current scheduled backup copies current objects only and does not preserve source versions.
-- Key administration requires account/master key credentials. Keep these in Vercel environment variables and never expose them in the browser. Newly created key secrets are returned once only.
+- Key administration and private/public bucket access require account/master key credentials. Keep these in Vercel environment variables and never expose them in the browser. Newly created key secrets are returned once only.
 - Analytics scans up to 100,000 objects per bucket per request; it marks incomplete scans.
 - Use HTTPS in production. Do not expose the admin password or B2 keys in client-side code.
 
