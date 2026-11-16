@@ -1,0 +1,2 @@
+import {admin,send,fail,method,body,client,CopyObjectCommand} from "../b2.js";
+export default async function handler(req,res){try{method(req,["POST"]);admin(req);const d=await body(req);if(!d.bucket||!d.key||!d.destination)throw Object.assign(new Error("bucket, key and destination required"),{status:400});await client().send(new CopyObjectCommand({Bucket:d.bucket,Key:d.destination,CopySource:encodeURIComponent(d.bucket+"/"+d.key).replace(/%2F/g,"/")}));send(res,200,{ok:true,message:"File copied"});}catch(e){fail(res,e);}}
