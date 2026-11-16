@@ -1,0 +1,2 @@
+import {admin,send,fail,method,body,client,GetObjectCommand,getSignedUrl} from "../b2.js";
+export default async function handler(req,res){try{method(req,["POST"]);admin(req);const d=await body(req);if(!d.bucket||!d.key)throw Object.assign(new Error("bucket and key required"),{status:400});const cmd=new GetObjectCommand({Bucket:d.bucket,Key:d.key,VersionId:d.versionId||undefined});const url=await getSignedUrl(client(),cmd,{expiresIn:600});send(res,200,{ok:true,url,expiresIn:600});}catch(e){fail(res,e);}}
