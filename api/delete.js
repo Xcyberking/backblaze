@@ -1,0 +1,2 @@
+import {admin,send,fail,method,body,client,DeleteObjectCommand} from "./_lib/b2.js";
+export default async function handler(req,res){try{method(req,["POST"]);admin(req);const d=await body(req);if(!d.bucket||!d.key)throw Object.assign(new Error("bucket and key required"),{status:400});await client().send(new DeleteObjectCommand({Bucket:d.bucket,Key:d.key,VersionId:d.versionId||undefined}));send(res,200,{ok:true,message:"Delete request completed"});}catch(e){fail(res,e);}}
