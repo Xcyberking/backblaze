@@ -18,7 +18,8 @@ A mobile-friendly Backblaze B2 S3-compatible storage dashboard deployed as Verce
 - Lifecycle expiration rule management.
 - Restricted application-key list/create/revoke (requires separate master key credentials).
 - Private/public bucket access control (requires master key credentials).
-- Manual bucket-to-bucket backup and daily Vercel Cron backup.
+- Manual bucket-to-bucket backup, date-stamped daily Vercel Cron snapshots and restore.
+- Private/public bucket access and bucket versioning controls.
 
 ## Deploy
 1. Import this repository into Vercel.
@@ -51,5 +52,5 @@ Create a Backblaze application key with only the required bucket and read/write/
 
 ## Important limitations
 - The S3 multipart flow is suitable for large files, but the deployment's function timeouts still apply to API calls; file bytes travel directly from browser to B2.
-- Bucket deletion only works when empty. Object Lock and retained versions may prevent permanent deletion.
+- Bucket deletion only works when empty. Public access and Object Lock can have serious privacy and retention consequences; use them deliberately. Object Lock and retained versions may prevent permanent deletion.
 - Test lifecycle, CORS and key-management operations with a narrowly scoped test bucket/key before production use.
