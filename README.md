@@ -9,7 +9,7 @@ A mobile-friendly Backblaze B2 S3-compatible storage dashboard deployed as Verce
 - Browser-to-B2 presigned uploads (files are not proxied through the function).
 - Presigned downloads, copy and delete.
 - Object version listing.
-- Responsive blue/white UI.\n- Multipart uploads for large files (64 MiB chunks).\n- Storage analytics across buckets (up to 1000 pages per bucket per run).\n- Object version restore.\n- Lifecycle expiration rule management.\n- Restricted application-key list/create/revoke (requires separate master key credentials).\n- Manual bucket-to-bucket backup and daily Vercel Cron backup.
+- Responsive blue/white UI.\n- Multipart uploads for large files (64 MiB chunks).\n- Storage analytics across buckets (up to 1000 pages per bucket per run).\n- Object version restore.\n- Default bucket encryption configuration and Object Lock controls (where supported by the bucket/API).\n- Per-object retention and legal-hold controls.\n- Lifecycle expiration rule management.\n- Restricted application-key list/create/revoke (requires separate master key credentials).\n- Manual bucket-to-bucket backup and daily Vercel Cron backup.
 
 ## Deploy
 1. Import this repository into Vercel.
