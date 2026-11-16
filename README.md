@@ -17,6 +17,7 @@ A mobile-friendly Backblaze B2 S3-compatible storage dashboard deployed as Verce
 - Per-object retention and legal-hold controls.
 - Lifecycle expiration rule management.
 - Restricted application-key list/create/revoke (requires separate master key credentials).
+- Private/public bucket access control (requires master key credentials).
 - Manual bucket-to-bucket backup and daily Vercel Cron backup.
 
 ## Deploy
